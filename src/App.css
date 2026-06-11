@@ -1,0 +1,5 @@
+/* Cleaned App.css to prevent conflicts with index.css dark theme */
+#root {
+  width: 100%;
+  margin: 0 auto;
+}
