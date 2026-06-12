@@ -35,6 +35,52 @@ const getIndustryData = (industryName) => {
   return industryMap[industryName] || { color: "#64748b", icon: EllipsisHorizontalIcon, colorClass: "text-slate-500", bgClass: "bg-slate-500/10", borderClass: "border-slate-500/30" };
 };
 
+// SVG data-URL icons for each weather category (used as ArcGIS PictureMarkerSymbol)
+const _svgUrl = (svg) => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+
+const WEATHER_ICONS = {
+  cerah: _svgUrl(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+      <defs>
+        <filter id="sg" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <circle cx="20" cy="20" r="9" fill="#FBBF24" filter="url(#sg)"/>
+      <line x1="20" y1="4"  x2="20" y2="9"  stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="20" y1="31" x2="20" y2="36" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="4"  y1="20" x2="9"  y2="20" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="31" y1="20" x2="36" y2="20" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="8.1"  y1="8.1"  x2="11.6" y2="11.6" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="28.4" y1="28.4" x2="31.9" y2="31.9" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="31.9" y1="8.1"  x2="28.4" y2="11.6" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="11.6" y1="28.4" x2="8.1"  y2="31.9" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`
+  ),
+  berawan: _svgUrl(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+      <ellipse cx="15" cy="26" rx="11" ry="8" fill="#64748B"/>
+      <ellipse cx="26" cy="26" rx="10" ry="7" fill="#64748B"/>
+      <ellipse cx="20" cy="21" rx="9" ry="7" fill="#94A3B8"/>
+      <ellipse cx="14" cy="23" rx="6" ry="5" fill="#94A3B8"/>
+      <ellipse cx="24" cy="22" rx="7" ry="6" fill="#CBD5E1"/>
+      <ellipse cx="18" cy="19" rx="8" ry="7" fill="#CBD5E1"/>
+    </svg>`
+  ),
+  hujan: _svgUrl(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+      <ellipse cx="14" cy="17" rx="10" ry="8" fill="#3B82F6"/>
+      <ellipse cx="25" cy="17" rx="9" ry="7" fill="#3B82F6"/>
+      <ellipse cx="19" cy="13" rx="8" ry="7" fill="#60A5FA"/>
+      <line x1="12" y1="28" x2="9"  y2="36" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="19" y1="28" x2="16" y2="36" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="26" y1="28" x2="23" y2="36" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`
+  ),
+};
+
+
 export default function Dashboard() {
   const [votes, setVotes] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
@@ -105,6 +151,7 @@ export default function Dashboard() {
   // Track previous vote count to distinguish initial load from real-time inserts
   const prevVoteCountRef = useRef(0);
 
+
   useEffect(() => {
     if (!graphicsLayerRef.current || !viewRef.current) return;
 
@@ -114,16 +161,30 @@ export default function Dashboard() {
     graphicsLayerRef.current.removeAll();
     geoVotes.forEach(v => {
       const indData = getIndustryData(v.industry);
+
+      // Use weather SVG icon if available, otherwise fall back to industry dot
+      const symbol = v.weather && WEATHER_ICONS[v.weather]
+        ? {
+            type: "picture-marker",
+            url: WEATHER_ICONS[v.weather],
+            width: "32px",
+            height: "32px",
+          }
+        : {
+            type: "simple-marker",
+            color: indData.color,
+            outline: { color: [255, 255, 255, 0.5], width: 1 },
+            size: "10px",
+          };
+
       const pointGraphic = new Graphic({
         geometry: { type: "point", longitude: v.longitude, latitude: v.latitude },
-        symbol: {
-          type: "simple-marker",
-          color: indData.color,
-          outline: { color: [255, 255, 255, 0.5], width: 1 },
-          size: "10px"
-        },
-        attributes: { name: v.name, industry: v.industry },
-        popupTemplate: { title: "{name}", content: "Industry: {industry}" }
+        symbol,
+        attributes: { name: v.name, industry: v.industry, weather: v.weather || "—" },
+        popupTemplate: {
+          title: "{name}",
+          content: "Industry: {industry}<br/>Weather: {weather}"
+        }
       });
       graphicsLayerRef.current.add(pointGraphic);
     });
