@@ -35,7 +35,7 @@ const getIndustryData = (industryName) => {
   return industryMap[industryName] || { color: "#64748b", icon: EllipsisHorizontalIcon, colorClass: "text-slate-500", bgClass: "bg-slate-500/10", borderClass: "border-slate-500/30" };
 };
 
-// SVG data-URL icons for each weather category (used as ArcGIS PictureMarkerSymbol)
+// SVG data-URL icons with embedded CSS animations for each weather category (used as ArcGIS PictureMarkerSymbol and in Live Feed)
 const _svgUrl = (svg) => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 
 const WEATHER_ICONS = {
@@ -47,35 +47,96 @@ const WEATHER_ICONS = {
           <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
-      <circle cx="20" cy="20" r="9" fill="#FBBF24" filter="url(#sg)"/>
-      <line x1="20" y1="4"  x2="20" y2="9"  stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="20" y1="31" x2="20" y2="36" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="4"  y1="20" x2="9"  y2="20" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="31" y1="20" x2="36" y2="20" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="8.1"  y1="8.1"  x2="11.6" y2="11.6" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="28.4" y1="28.4" x2="31.9" y2="31.9" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="31.9" y1="8.1"  x2="28.4" y2="11.6" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="11.6" y1="28.4" x2="8.1"  y2="31.9" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+        }
+        .sun-rays {
+          transform-origin: 20px 20px;
+          animation: spin 16s linear infinite;
+        }
+        .sun-body {
+          transform-origin: 20px 20px;
+          animation: pulse 4s ease-in-out infinite;
+        }
+      </style>
+      <g class="sun-rays">
+        <line x1="20" y1="4"  x2="20" y2="9"  stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="20" y1="31" x2="20" y2="36" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="4"  y1="20" x2="9"  y2="20" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="31" y1="20" x2="36" y2="20" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="8.1"  y1="8.1"  x2="11.6" y2="11.6" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="28.4" y1="28.4" x2="31.9" y2="31.9" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="31.9" y1="8.1"  x2="28.4" y2="11.6" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="11.6" y1="28.4" x2="8.1"  y2="31.9" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+      <circle class="sun-body" cx="20" cy="20" r="9" fill="#FBBF24" filter="url(#sg)"/>
     </svg>`
   ),
   berawan: _svgUrl(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
-      <ellipse cx="15" cy="26" rx="11" ry="8" fill="#64748B"/>
-      <ellipse cx="26" cy="26" rx="10" ry="7" fill="#64748B"/>
-      <ellipse cx="20" cy="21" rx="9" ry="7" fill="#94A3B8"/>
-      <ellipse cx="14" cy="23" rx="6" ry="5" fill="#94A3B8"/>
-      <ellipse cx="24" cy="22" rx="7" ry="6" fill="#CBD5E1"/>
-      <ellipse cx="18" cy="19" rx="8" ry="7" fill="#CBD5E1"/>
+      <style>
+        @keyframes drift {
+          0%, 100% { transform: translate(0px, 0px); }
+          50% { transform: translate(1px, -1.5px); }
+        }
+        .cloud-back {
+          animation: drift 5s ease-in-out infinite;
+        }
+        .cloud-front {
+          animation: drift 4s ease-in-out infinite alternate;
+        }
+      </style>
+      <g class="cloud-back">
+        <ellipse cx="15" cy="26" rx="11" ry="8" fill="#64748B"/>
+        <ellipse cx="26" cy="26" rx="10" ry="7" fill="#64748B"/>
+      </g>
+      <g class="cloud-front">
+        <ellipse cx="20" cy="21" rx="9" ry="7" fill="#94A3B8"/>
+        <ellipse cx="14" cy="23" rx="6" ry="5" fill="#94A3B8"/>
+        <ellipse cx="24" cy="22" rx="7" ry="6" fill="#CBD5E1"/>
+        <ellipse cx="18" cy="19" rx="8" ry="7" fill="#CBD5E1"/>
+      </g>
     </svg>`
   ),
   hujan: _svgUrl(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
-      <ellipse cx="14" cy="17" rx="10" ry="8" fill="#3B82F6"/>
-      <ellipse cx="25" cy="17" rx="9" ry="7" fill="#3B82F6"/>
-      <ellipse cx="19" cy="13" rx="8" ry="7" fill="#60A5FA"/>
-      <line x1="12" y1="28" x2="9"  y2="36" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="19" y1="28" x2="16" y2="36" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="26" y1="28" x2="23" y2="36" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
+      <style>
+        @keyframes drift-cloud {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-1px); }
+        }
+        @keyframes rain {
+          0% { transform: translate(0px, 0px); opacity: 0; }
+          30% { opacity: 1; }
+          100% { transform: translate(-2px, 6px); opacity: 0; }
+        }
+        .cloud-group {
+          animation: drift-cloud 4s ease-in-out infinite;
+        }
+        .rain-drop-1 {
+          animation: rain 1.2s infinite linear;
+        }
+        .rain-drop-2 {
+          animation: rain 1.2s infinite linear 0.4s;
+        }
+        .rain-drop-3 {
+          animation: rain 1.2s infinite linear 0.8s;
+        }
+      </style>
+      <g class="cloud-group">
+        <ellipse cx="14" cy="17" rx="10" ry="8" fill="#3B82F6"/>
+        <ellipse cx="25" cy="17" rx="9" ry="7" fill="#3B82F6"/>
+        <ellipse cx="19" cy="13" rx="8" ry="7" fill="#60A5FA"/>
+      </g>
+      <line class="rain-drop-1" x1="12" y1="28" x2="9"  y2="36" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
+      <line class="rain-drop-2" x1="19" y1="28" x2="16" y2="36" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
+      <line class="rain-drop-3" x1="26" y1="28" x2="23" y2="36" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`
   ),
 };
@@ -165,17 +226,17 @@ export default function Dashboard() {
       // Use weather SVG icon if available, otherwise fall back to industry dot
       const symbol = v.weather && WEATHER_ICONS[v.weather]
         ? {
-            type: "picture-marker",
-            url: WEATHER_ICONS[v.weather],
-            width: "32px",
-            height: "32px",
-          }
+          type: "picture-marker",
+          url: WEATHER_ICONS[v.weather],
+          width: "32px",
+          height: "32px",
+        }
         : {
-            type: "simple-marker",
-            color: indData.color,
-            outline: { color: [255, 255, 255, 0.5], width: 1 },
-            size: "10px",
-          };
+          type: "simple-marker",
+          color: indData.color,
+          outline: { color: [255, 255, 255, 0.5], width: 1 },
+          size: "10px",
+        };
 
       const pointGraphic = new Graphic({
         geometry: { type: "point", longitude: v.longitude, latitude: v.latitude },
@@ -290,8 +351,10 @@ export default function Dashboard() {
 
           {/* Map */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <MapIcon className="w-5 h-5 text-white/70" />
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="animate-icon-pulse relative flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                <MapIcon className="w-5 h-5 text-indigo-400" />
+              </div>
               <h2 className="text-lg font-bold">Live Responder Map</h2>
               <span className="text-xs text-white/40 ml-2">Real-Time streaming via ArcGIS</span>
             </div>
@@ -302,8 +365,10 @@ export default function Dashboard() {
 
           {/* Live Feed */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <SignalIcon className="w-5 h-5 text-white/70" />
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="animate-icon-pulse relative flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <SignalIcon className="w-5 h-5 text-emerald-400" />
+              </div>
               <h2 className="text-lg font-bold">Live Feed</h2>
               <span className="bg-indigo-600/20 text-indigo-400 text-xs ml-auto px-2 py-1 rounded-full border border-indigo-500/20">
                 {recentVotes.length} recent
@@ -325,21 +390,21 @@ export default function Dashboard() {
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${iData.bgClass}`}>
                           <IconComp className={`w-4 h-4 ${iData.colorClass}`} />
                         </div>
-                        <div className="flex-1 min-w-0 flex items-center flex-wrap gap-1">
+                        <div className="flex-1 min-w-0 flex items-center flex-wrap gap-1.5">
                           <span className="font-medium text-sm text-white/90 truncate max-w-[100px]">{vote.name || "Anonymous"}</span>
-                          <span className="text-white/40 text-xs mx-1">voted</span>
+                          <span className="text-white/40 text-xs mx-0.5">voted</span>
                           <span className={`inline-flex h-5 w-fit items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${iData.borderClass} ${iData.colorClass} ${iData.bgClass}`}>
                             {vote.industry}
                           </span>
                           {vote.weather && (
-                            <span className={`inline-flex h-5 w-fit items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                              vote.weather === 'cerah'
-                                ? 'border-amber-500/30 text-amber-400 bg-amber-500/10'
-                                : vote.weather === 'berawan'
+                            <span className={`inline-flex h-5 w-fit items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-medium gap-1 ${vote.weather === 'cerah'
+                              ? 'border-amber-500/30 text-amber-400 bg-amber-500/10'
+                              : vote.weather === 'berawan'
                                 ? 'border-slate-500/30 text-slate-300 bg-slate-500/10'
                                 : 'border-blue-500/30 text-blue-400 bg-blue-500/10'
-                            }`}>
-                              {vote.weather === 'cerah' ? '☀' : vote.weather === 'berawan' ? '☁' : '🌧'} {vote.weather}
+                              }`}>
+                              <img src={WEATHER_ICONS[vote.weather]} className="w-3.5 h-3.5 shrink-0" alt="" />
+                              <span className="capitalize">{vote.weather}</span>
                             </span>
                           )}
                         </div>

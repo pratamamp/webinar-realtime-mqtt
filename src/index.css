@@ -97,4 +97,17 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
   }
+
+  @keyframes custom-pulse {
+    0%, 100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .animate-icon-pulse {
+    animation: custom-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }

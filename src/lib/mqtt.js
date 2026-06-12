@@ -11,12 +11,27 @@ let isConnected = false;
 function getClient() {
   if (client) return client;
 
-  const options = {};
+  const options = {
+    connectTimeout: 5000, // Timeout after 5s
+    reconnectPeriod: 2000, // Reconnect every 2s
+  };
+
   const username = import.meta.env.VITE_MQTT_USERNAME;
   const password = import.meta.env.VITE_MQTT_PASSWORD;
   if (username && password) {
     options.username = username;
     options.password = password;
+  }
+
+  // Robust default port handling for MQTT.js in browser environments
+  try {
+    const parsedUrl = new URL(MQTT_BROKER_URL);
+    if (!parsedUrl.port) {
+      options.port = parsedUrl.protocol === 'wss:' ? 443 : 80;
+      console.log(`ℹ️ No port specified in MQTT Broker URL. Defaulting to port ${options.port} for ${parsedUrl.protocol}`);
+    }
+  } catch (err) {
+    console.warn('⚠️ Parsing MQTT_BROKER_URL failed, relying on defaults:', err);
   }
 
   client = mqtt.connect(MQTT_BROKER_URL, options);
