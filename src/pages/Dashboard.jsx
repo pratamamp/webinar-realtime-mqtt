@@ -1,16 +1,15 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card } from "../components/ui/card";
 import { supabase } from "../lib/supabase";
-import { 
-  UsersIcon, 
-  SignalIcon, 
-  MapIcon, 
-  ClockIcon, 
-  TruckIcon, 
-  BoltIcon, 
-  BuildingOffice2Icon, 
-  GlobeAmericasIcon, 
+import {
+  UsersIcon,
+  SignalIcon,
+  MapIcon,
+  ClockIcon,
+  TruckIcon,
+  BoltIcon,
+  BuildingOffice2Icon,
+  GlobeAmericasIcon,
   ShieldCheckIcon,
   EllipsisHorizontalIcon
 } from "@heroicons/react/24/outline";
@@ -20,7 +19,8 @@ import Map from "@arcgis/core/Map";
 import MapView from "@arcgis/core/views/MapView";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Graphic from "@arcgis/core/Graphic";
-
+import config from "@arcgis/core/config";
+config.apiKey = import.meta.env.VITE_ARCGIS_API_KEY;
 // Map industry to specific tailwind colors and icons
 const industryMap = {
   "Transportation": { color: "#6366f1", icon: TruckIcon, colorClass: "text-indigo-500", bgClass: "bg-indigo-500/10", borderClass: "border-indigo-500/30" },
@@ -37,7 +37,7 @@ const getIndustryData = (industryName) => {
 export default function Dashboard() {
   const [votes, setVotes] = useState([]);
   const [totalVotes, setTotalVotes] = useState(0);
-  
+
   const mapDiv = useRef(null);
   const viewRef = useRef(null);
   const graphicsLayerRef = useRef(null);
@@ -195,7 +195,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen p-6 max-w-7xl mx-auto space-y-8 bg-[#0a0b10] text-[#f1f1f1]">
-      
+
       {/* Header */}
       <header className="border-b border-white/5 bg-white/[0.02] backdrop-blur-md rounded-2xl sticky top-4 z-50 px-6 py-4 flex items-center justify-between mb-8 shadow-2xl">
         <div className="flex items-center gap-3">
@@ -239,7 +239,7 @@ export default function Dashboard() {
 
         {/* Map & Feed Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          
+
           {/* Map */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2 mb-4">
@@ -325,10 +325,10 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-white/10 overflow-hidden w-full relative">
-                    <div 
+                    <div
                       className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
-                      style={{ 
-                        width: `${item.percentage}%`, 
+                      style={{
+                        width: `${item.percentage}%`,
                         backgroundColor: item.data.color,
                         boxShadow: `0 0 10px ${item.data.color}, 0 0 20px ${item.data.color}`
                       }}

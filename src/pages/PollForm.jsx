@@ -64,10 +64,12 @@ export default function PollForm() {
       if (dbError) throw dbError;
 
       // Publish to MQTT for ArcGIS Velocity (fire-and-forget)
-      publishVote(payload).catch((err) =>
+      publishVote(payload).then(() => {
+        console.log('✅ MQTT publish success', JSON.stringify(payload));
+      }).catch((err) =>
         console.warn('MQTT publish failed (non-blocking):', err)
       );
-      
+
       localStorage.setItem("hasVote", "true");
       setIsSubmitted(true);
     } catch (err) {
@@ -147,16 +149,14 @@ export default function PollForm() {
                     <button
                       type="button"
                       onClick={() => setSelectedIndustry(option.id)}
-                      className={`w-full flex items-center p-4 rounded-xl border transition-all duration-200 ${
-                        selectedIndustry === option.id
-                          ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]"
-                          : "bg-black/20 border-white/10 hover:bg-white/5"
-                      }`}
+                      className={`w-full flex items-center p-4 rounded-xl border transition-all duration-200 ${selectedIndustry === option.id
+                        ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]"
+                        : "bg-black/20 border-white/10 hover:bg-white/5"
+                        }`}
                     >
                       <div
-                        className={`w-5 h-5 rounded-full border-2 mr-4 flex items-center justify-center ${
-                          selectedIndustry === option.id ? "border-primary" : "border-white/30"
-                        }`}
+                        className={`w-5 h-5 rounded-full border-2 mr-4 flex items-center justify-center ${selectedIndustry === option.id ? "border-primary" : "border-white/30"
+                          }`}
                       >
                         {selectedIndustry === option.id && (
                           <motion.div
