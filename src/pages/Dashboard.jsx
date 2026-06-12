@@ -19,6 +19,7 @@ import Map from "@arcgis/core/Map";
 import MapView from "@arcgis/core/views/MapView";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Graphic from "@arcgis/core/Graphic";
+import Extent from "@arcgis/core/geometry/Extent";
 import config from "@arcgis/core/config";
 config.apiKey = import.meta.env.VITE_ARCGIS_API_KEY;
 // Map industry to specific tailwind colors and icons
@@ -55,8 +56,8 @@ export default function Dashboard() {
       const view = new MapView({
         container: mapDiv.current,
         map: map,
-        center: [0, 20],
-        zoom: 2,
+        center: [118, -2.5],
+        zoom: 3,
         ui: { components: ["zoom"] }
       });
 
@@ -105,74 +106,60 @@ export default function Dashboard() {
   const prevVoteCountRef = useRef(0);
 
   useEffect(() => {
-    if (graphicsLayerRef.current && viewRef.current) {
-      graphicsLayerRef.current.removeAll();
+    if (!graphicsLayerRef.current || !viewRef.current) return;
 
-      const geoVotes = votes.filter(v => v.latitude != null && v.longitude != null);
+    const geoVotes = votes.filter(v => v.latitude != null && v.longitude != null);
 
-      geoVotes.forEach(v => {
-        const indData = getIndustryData(v.industry);
-        const point = { type: "point", longitude: v.longitude, latitude: v.latitude };
-
-        const markerSymbol = {
+    // Rebuild graphics layer
+    graphicsLayerRef.current.removeAll();
+    geoVotes.forEach(v => {
+      const indData = getIndustryData(v.industry);
+      const pointGraphic = new Graphic({
+        geometry: { type: "point", longitude: v.longitude, latitude: v.latitude },
+        symbol: {
           type: "simple-marker",
           color: indData.color,
           outline: { color: [255, 255, 255, 0.5], width: 1 },
           size: "10px"
-        };
-
-        const pointGraphic = new Graphic({
-          geometry: point,
-          symbol: markerSymbol,
-          attributes: { name: v.name, industry: v.industry },
-          popupTemplate: {
-            title: "{name}",
-            content: "Industry: {industry}"
-          }
-        });
-
-        graphicsLayerRef.current.add(pointGraphic);
+        },
+        attributes: { name: v.name, industry: v.industry },
+        popupTemplate: { title: "{name}", content: "Industry: {industry}" }
       });
+      graphicsLayerRef.current.add(pointGraphic);
+    });
 
-      // Adjust map extent to fit all points
-      if (geoVotes.length > 0) {
-        const isNewVote = votes.length > prevVoteCountRef.current && prevVoteCountRef.current > 0;
+    // Wait for the view to be ready before flying to extent
+    if (geoVotes.length > 0) {
+      const isNewVote = votes.length > prevVoteCountRef.current && prevVoteCountRef.current > 0;
+      const duration = isNewVote ? 1500 : 800;
 
+      viewRef.current.when(() => {
         if (geoVotes.length === 1) {
-          // Single point — center on it with a reasonable zoom
+          // Single point — zoom in close
           viewRef.current.goTo(
-            { center: [geoVotes[0].longitude, geoVotes[0].latitude], zoom: 12 },
-            { duration: isNewVote ? 1500 : 800, easing: "ease-in-out" }
+            { center: [geoVotes[0].longitude, geoVotes[0].latitude], zoom: 10 },
+            { duration, easing: "ease-in-out" }
           );
         } else {
-          // Multiple points — compute extent from all points
+          // Multiple points — fit extent with padding
           const lons = geoVotes.map(v => v.longitude);
           const lats = geoVotes.map(v => v.latitude);
-          const extent = {
+          const extent = new Extent({
             xmin: Math.min(...lons),
             ymin: Math.min(...lats),
             xmax: Math.max(...lons),
             ymax: Math.max(...lats),
             spatialReference: { wkid: 4326 }
-          };
-
-          viewRef.current.goTo(
-            { target: extent },
-            { duration: isNewVote ? 1500 : 800, easing: "ease-in-out" }
-          ).then(() => {
-            // Add some padding by zooming out 1 level
-            if (viewRef.current.zoom > 1) {
-              viewRef.current.goTo(
-                { zoom: viewRef.current.zoom - 1 },
-                { duration: 300, easing: "ease-out" }
-              );
-            }
           });
+          viewRef.current.goTo(
+            { target: extent.expand(1.4) },
+            { duration, easing: "ease-in-out" }
+          );
         }
-      }
-
-      prevVoteCountRef.current = votes.length;
+      });
     }
+
+    prevVoteCountRef.current = votes.length;
   }, [votes]);
 
   // Compute stats
@@ -283,6 +270,17 @@ export default function Dashboard() {
                           <span className={`inline-flex h-5 w-fit items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${iData.borderClass} ${iData.colorClass} ${iData.bgClass}`}>
                             {vote.industry}
                           </span>
+                          {vote.weather && (
+                            <span className={`inline-flex h-5 w-fit items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                              vote.weather === 'cerah'
+                                ? 'border-amber-500/30 text-amber-400 bg-amber-500/10'
+                                : vote.weather === 'berawan'
+                                ? 'border-slate-500/30 text-slate-300 bg-slate-500/10'
+                                : 'border-blue-500/30 text-blue-400 bg-blue-500/10'
+                            }`}>
+                              {vote.weather === 'cerah' ? '☀' : vote.weather === 'berawan' ? '☁' : '🌧'} {vote.weather}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <ClockIcon className="w-3 h-3 text-white/40" />

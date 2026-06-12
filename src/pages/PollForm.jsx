@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Button } from "../components/ui/button";
 import { supabase } from "../lib/supabase";
 import { publishVote } from "../lib/mqtt";
-import { CheckCircleIcon, ArrowPathIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { fetchWeatherLabel } from "../lib/weather";
+import { CheckCircleIcon, ArrowPathIcon, MapPinIcon, SunIcon, CloudIcon } from "@heroicons/react/24/outline";
 
 const industries = [
   { id: "Agriculture", label: "Agriculture" },
@@ -23,20 +24,25 @@ export default function PollForm() {
   });
   const [error, setError] = useState("");
   const [location, setLocation] = useState(null);
+  const [weather, setWeather] = useState(null);
+  const [isFetchingWeather, setIsFetchingWeather] = useState(false);
 
   useEffect(() => {
-    // Try to get user location for the poll
+    // Try to get user location for the poll, then fetch weather
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation({ latitude, longitude });
+
+          // Fetch weather from Open-Meteo
+          setIsFetchingWeather(true);
+          const label = await fetchWeatherLabel(latitude, longitude);
+          setWeather(label);
+          setIsFetchingWeather(false);
         },
         (err) => {
           console.warn("Geolocation not available or denied:", err);
-          // Fallback location if needed or leave as null
         }
       );
     }
@@ -55,6 +61,7 @@ export default function PollForm() {
         industry: selectedIndustry,
         latitude: location?.latitude || null,
         longitude: location?.longitude || null,
+        weather: weather || null,
       };
 
       const { error: dbError } = await supabase
@@ -171,9 +178,36 @@ export default function PollForm() {
                 ))}
               </div>
 
-              <div className="text-xs text-muted-foreground flex items-center gap-2">
-                <MapPinIcon className="w-4 h-4" />
-                {location ? "Location captured" : "Waiting for location..."}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <MapPinIcon className="w-4 h-4" />
+                  {location ? "Location captured" : "Waiting for location..."}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  {isFetchingWeather ? (
+                    <>
+                      <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                      Fetching weather...
+                    </>
+                  ) : weather ? (
+                    <>
+                      {weather === 'cerah' && <SunIcon className="w-4 h-4 text-amber-400" />}
+                      {weather === 'berawan' && <CloudIcon className="w-4 h-4 text-slate-400" />}
+                      {weather === 'hujan' && <CloudIcon className="w-4 h-4 text-blue-400" />}
+                      <span
+                        className={`capitalize font-medium ${
+                          weather === 'cerah' ? 'text-amber-400' :
+                          weather === 'berawan' ? 'text-slate-300' :
+                          'text-blue-400'
+                        }`}
+                      >
+                        {weather}
+                      </span>
+                    </>
+                  ) : location ? (
+                    "Weather unavailable"
+                  ) : null}
+                </span>
               </div>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}
